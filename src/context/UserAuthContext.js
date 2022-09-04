@@ -6,8 +6,10 @@ import {
   signOut,
   GoogleAuthProvider,
   signInWithPopup,
+  RecaptchaVerifier,
+  signInWithPhoneNumber
 } from "firebase/auth";
-import { getMessaging, getToken} from 'firebase/messaging';
+import { getMessaging, getToken } from 'firebase/messaging';
 import { auth } from "../firebase";
 
 const userAuthContext = createContext();
@@ -24,15 +26,27 @@ export function UserAuthContextProvider({ children }) {
   function logOut() {
     return signOut(auth);
   }
+  // login with google
   function googleSignIn() {
     const googleAuthProvider = new GoogleAuthProvider();
     return signInWithPopup(auth, googleAuthProvider);
   }
-  
-  function pushNotification(){
+  // login with mobile
+  function setUpRecaptha(number) {
+    const recaptchaVerifier = new RecaptchaVerifier(
+      "recaptcha-container",
+      {},
+      auth
+    );
+    recaptchaVerifier.render();
+    return signInWithPhoneNumber(auth, number, recaptchaVerifier);
+  }
+  // push notification
+  function pushNotification() {
     const messaging = getMessaging();
     return getToken(messaging, { vapidKey: process.env.VAPID_KEY });
   }
+
   useEffect(() => {
     const unsubscribe = onAuthStateChanged(auth, (currentuser) => {
       console.log("Auth", currentuser);
@@ -46,7 +60,7 @@ export function UserAuthContextProvider({ children }) {
 
   return (
     <userAuthContext.Provider
-      value={{ user, logIn, signUp, logOut, googleSignIn, pushNotification }}
+      value={{ user, logIn, signUp, logOut, googleSignIn, setUpRecaptha, pushNotification }}
     >
       {children}
     </userAuthContext.Provider>
