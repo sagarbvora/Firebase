@@ -1,7 +1,9 @@
 import { initializeApp } from "firebase/app";
 import { getAuth } from "firebase/auth";
+import { getFirestore } from "firebase/firestore";
+import { getAnalytics } from "firebase/analytics";
 
-const firebaseConfig = {
+const firebaseConfig = {  
   apiKey: "AIzaSyDzO7W2-xa0hdvZd6pyfGKs3hV2aooqHTY",
   authDomain: "react-authentication-d9e2d.firebaseapp.com",
   projectId: "react-authentication-d9e2d",
@@ -14,4 +16,6 @@ const firebaseConfig = {
 // Initialize Firebase
 const app = initializeApp(firebaseConfig);
 export const auth = getAuth(app);
+export const db = getFirestore(app);
+export const analytics = getAnalytics(app);
 export default app;

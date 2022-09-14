@@ -4,6 +4,15 @@ import { Form, Alert } from "react-bootstrap";
 import { Button } from "react-bootstrap";
 import GoogleButton from "react-google-button";
 import { useUserAuth } from "../context/UserAuthContext";
+import { db } from '../firebase';
+import {
+  getFirestore,
+  query,
+  getDocs,
+  collection,
+  where,
+  addDoc,
+} from "firebase/firestore";
 
 const Login = () => {
   const [email, setEmail] = useState("");
@@ -26,7 +35,21 @@ const Login = () => {
   const handleGoogleSignIn = async (e) => {
     e.preventDefault();
     try {
-      await googleSignIn();
+      const res = await googleSignIn();
+      const user = res.user;
+      const q = query(collection(db, "users"), where("uid", "==", user.uid));
+      const docs = await getDocs(q);
+      if (docs.docs.length === 0) {
+        await addDoc(collection(db, "users"), {
+          uid: user.uid,
+          name: user.displayName,
+          authProvider: "google",
+          email: user.email,
+          photoURL: user.photoURL,
+          phoneNumber: user.phoneNumber,
+          token: user.accessToken
+        });
+      }
       navigate("/home");
     } catch (error) {
       console.log(error.message);

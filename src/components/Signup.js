@@ -3,11 +3,12 @@ import { Link, useNavigate } from "react-router-dom";
 import { Form, Alert } from "react-bootstrap";
 import { Button } from "react-bootstrap";
 import { useUserAuth } from "../context/UserAuthContext";
+import { addDoc, collection, getDocs, query, where } from "firebase/firestore";
+import { db } from "../firebase";
 
 const Signup = () => {
-  const [email, setEmail] = useState("");
+  const [userDetails, setUserDetails] = useState({});
   const [error, setError] = useState("");
-  const [password, setPassword] = useState("");
   const { signUp } = useUserAuth();
   let navigate = useNavigate();
 
@@ -15,11 +16,33 @@ const Signup = () => {
     e.preventDefault();
     setError("");
     try {
-      await signUp(email, password);
+      const res = await signUp(userDetails.email, userDetails.password);
+      const user = res.user;
+      const q = query(collection(db, "users"), where("uid", "==", user.uid));
+      const docs = await getDocs(q);
+      if (docs.docs.length === 0) {
+        await addDoc(collection(db, "users"), {
+          uid: user.uid,
+          name: userDetails.name,
+          authProvider: "google",
+          email: user.email,
+          photoURL: user.photoURL,
+          phoneNumber: user.phoneNumber,
+          token: user.accessToken
+        });
+      }
       navigate("/");
     } catch (err) {
       setError(err.message);
     }
+  };
+
+  const onHandleChange = (e) =>{
+    const { name, value } = e.target;
+    setUserDetails({
+      ...userDetails,
+      [name]: value
+    })
   };
 
   return (
@@ -30,9 +53,18 @@ const Signup = () => {
         <Form onSubmit={handleSubmit}>
           <Form.Group className="mb-3" controlId="formBasicEmail">
             <Form.Control
+              type="text"
+              placeholder="Name"
+              name="name"
+              onChange={onHandleChange}
+            />
+          </Form.Group>
+          <Form.Group className="mb-3" controlId="formBasicEmail">
+            <Form.Control
               type="email"
               placeholder="Email address"
-              onChange={(e) => setEmail(e.target.value)}
+              name="email"
+              onChange={onHandleChange}
             />
           </Form.Group>
 
@@ -40,7 +72,8 @@ const Signup = () => {
             <Form.Control
               type="password"
               placeholder="Password"
-              onChange={(e) => setPassword(e.target.value)}
+              name="password"
+              onChange={onHandleChange}
             />
           </Form.Group>
 
